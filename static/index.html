@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Plan Content Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 20px; }
+        #container { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { text-align: center; }
+        #form-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        fieldset { border: 1px solid #ccc; border-radius: 8px; padding: 15px; }
+        legend { font-weight: bold; font-size: 1.2em; }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group textarea {
+            width: 100%; padding: 8px; border-radius: 4px;
+            border: 1px solid #ccc; box-sizing: border-box;
+        }
+        .input-group textarea { min-height: 80px; resize: vertical; }
+        #generate-btn {
+            width: 100%; padding: 1rem; background-color: #007bff; color: white;
+            border: none; border-radius: 4px; cursor: pointer; font-size: 1.2em;
+            margin-top: 20px;
+        }
+        #generate-btn:disabled { background-color: #aaa; }
+        #status { text-align: center; font-weight: bold; font-size: 1.2em; margin-top: 20px; }
+        
+        /* Two-Table Styles */
+        #results-container { margin-top: 30px; }
+        #table-wrapper { display: flex; flex-direction: row; width: 100%; }
+        
+        #section-table, #content-table { border-collapse: collapse; }
+
+        /* This forces the rows in both tables to align. */
+        #section-table th, #section-table td, 
+        #content-table th, #content-table td {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+            min-height: 50px; /* This ensures rows line up */
+            height: 1px; /* Works with min-height to ensure consistency */
+        }
+        
+        /* Section Table (Left) */
+        #section-table {
+            width: 20%; /* Give section table a fixed 20% width */
+            flex-shrink: 0;
+        }
+        #section-table th { background-color: #e0e0e0; }
+        #section-table td { font-weight: bold; background-color: #f9f9f9; word-break: break-word; }
+
+        /* Content Table Wrapper (Right) */
+        #content-table-wrapper {
+            width: 80%; /* Give content table the other 80% */
+            flex-grow: 1;
+            overflow-x: auto;
+        }
+        #content-table {
+            width: 100%;
+            table-layout: fixed; /* This forces the 4 Day columns to be equal */
+        }
+        #content-table th { background-color: #f2f2f2; }
+        #content-table td { word-break: break-word; }
+
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <h1>Learning Plan Content Generator</h1>
+        <p>Fill in the Topic, Knowledge, and Skill for each day. The AI will generate all other fields.</p>
+
+        <div id="form-container">
+            <fieldset>
+                <legend>Day 1</legend>
+                <div class="input-group">
+                    <label for="topic1">Topic:</label>
+                    <input type="text" id="topic1" placeholder="e.g., Prepare Egg Dishes (Mise en Place)">
+                </div>
+                <div class="input-group">
+                    <label for="knowledge1">Knowledge (PoC):</label>
+                    <textarea id="knowledge1" placeholder="Students will know..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="skill1">Skill (PoC):</label>
+                    <textarea id="skill1" placeholder="Students will be able to..."></textarea>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Day 2</legend>
+                <div class="input-group">
+                    <label for="topic2">Topic:</label>
+                    <input type="text" id="topic2" placeholder="e.g., Preparing Egg Dishes">
+                </div>
+                <div class="input-group">
+                    <label for="knowledge2">Knowledge (PoC):</label>
+                    <textarea id="knowledge2"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="skill2">Skill (PoC):</label>
+                    <textarea id="skill2"></textarea>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Day 3</legend>
+                <div class="input-group">
+                    <label for="topic3">Topic:</label>
+                    <input type="text" id="topic3" placeholder="e.g., Laboratory Activity">
+                </div>
+                <div class="input-group">
+                    <label for="knowledge3">Knowledge (PoC):</label>
+                    <textarea id="knowledge3"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="skill3">Skill (PoC):</label>
+                    <textarea id="skill3"></textarea>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Day 4</legend>
+                <div class="input-group">
+                    <label for="topic4">Topic:</label>
+                    <input type="text" id="topic4" placeholder="e.g., Plating Egg Dishes">
+                </div>
+                <div class="input-group">
+                    <label for="knowledge4">Knowledge (PoC):</label>
+                    <textarea id="knowledge4"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="skill4">Skill (PoC):</label>
+                    <textarea id="skill4"></textarea>
+                </div>
+            </fieldset>
+        </div>
+
+        <button id="generate-btn">Generate All 4 Days</button>
+        <div id="status"></div>
+        
+        <div id="results-container">
+            </div>
+    </div>
+
+    <script>
+        const generateBtn = document.getElementById('generate-btn');
+        const statusEl = document.getElementById('status');
+        const resultsContainer = document.getElementById('results-container');
+
+        generateBtn.addEventListener('click', async () => {
+            statusEl.textContent = "Generating... This will take a few minutes as it's calling the AI 4 times.";
+            statusEl.style.color = "#333";
+            generateBtn.disabled = true;
+            resultsContainer.innerHTML = ""; // Clear old results
+
+            // 1. Gather all 12 inputs
+            const daysData = [];
+            for (let i = 1; i <= 4; i++) {
+                daysData.push({
+                    topic: document.getElementById(`topic${i}`).value,
+                    knowledge: document.getElementById(`knowledge${i}`).value,
+                    skill: document.getElementById(`skill${i}`).value
+                });
+            }
+
+            try {
+                // 2. Send all 12 inputs to the backend
+                const response = await fetch('/generate-content', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days: daysData })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || "An unknown error occurred");
+                }
+
+                const data = await response.json();
+                
+                // 3. Call the function to build the HTML tables
+                displayTable(data.results);
+                statusEl.textContent = "Success! Your content is ready below.";
+                statusEl.style.color = "green";
+
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.style.color = "red";
+                console.error("Fetch Error:", error);
+            }
+
+            generateBtn.disabled = false;
+        });
+
+        // This function builds the two tables
+        function displayTable(results) {
+            // These are the 16 section titles, matching app.py
+            const sections = [
+                'Rvw', 'Fcs', 'Vcb', 'Mtv', 'APK', 
+                'Knowledge (PoC)', 'Skill (PoC)', 'Activities', 
+                'BoC', 'Values (INT)', 'Social (INT)', 
+                'Discipline (INT)', 'Biblical (INT)', 'Evaluation (Eva)', 
+                'Summary / Action', 'Assignment (PuA)'
+            ];
+            // These are the 16 "keys" the server sends back, matching app.py
+            const keys = [
+                'rvw', 'fcs', 'vcb', 'mtv', 'apk', 
+                'knowledge', 'skill', 'activities', 
+                'boc', 'values', 'social', 
+                'discipline', 'biblical', 'eva', 
+                'smr_act', 'pua'
+            ];
+            
+            // --- Build Table 1 (Section Headers) ---
+            let sectionTableHTML = '<table id="section-table">';
+            sectionTableHTML += '<thead><tr><th>Section</th></tr></thead>';
+            sectionTableHTML += '<tbody>';
+            for (let i = 0; i < sections.length; i++) {
+                sectionTableHTML += `<tr><td><strong>${sections[i]}</strong></td></tr>`;
+            }
+            sectionTableHTML += '</tbody></table>';
+
+            // --- Build Table 2 (Content) ---
+            let contentTableHTML = '<table id="content-table">';
+            contentTableHTML += '<thead><tr><th>Day 1</th><th>Day 2</th><th>Day 3</th><th>Day 4</th></tr></thead>';
+            contentTableHTML += '<tbody>';
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                contentTableHTML += '<tr>';
+                // Add content for Day 1, 2, 3, 4
+                // We use .replace(/\n/g, '<br>') to respect line breaks from the AI
+                contentTableHTML += `<td>${(results[0][key] || '').replace(/\n/g, '<br>')}</td>`; // Day 1
+                contentTableHTML += `<td>${(results[1][key] || '').replace(/\n/g, '<br>')}</td>`; // Day 2
+                contentTableHTML += `<td>${(results[2][key] || '').replace(/\n/g, '<br>')}</td>`; // Day 3
+                contentTableHTML += `<td>${(results[3][key] || '').replace(/\n/g, '<br>')}</td>`; // Day 4
+                contentTableHTML += '</tr>';
+            }
+            contentTableHTML += '</tbody></table>';
+
+            // --- Combine them in the wrapper ---
+            resultsContainer.innerHTML = `
+                <div id="table-wrapper">
+                    ${sectionTableHTML}
+                    <div id="content-table-wrapper">
+                        ${contentTableHTML}
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
